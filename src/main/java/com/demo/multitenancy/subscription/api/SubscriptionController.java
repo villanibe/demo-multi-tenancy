@@ -27,13 +27,14 @@ public class SubscriptionController {
   }
 
   @Operation(summary = "Get current tenant subscription")
+  @PreAuthorize("@tenantPermission.has('subscription.read')")
   @GetMapping("/current")
   public ResponseEntity<SubscriptionResponse> current() {
     return ResponseEntity.ok(toResponse(subscriptionService.getCurrentSubscription()));
   }
 
   @Operation(summary = "Start trial if missing")
-  @PreAuthorize("hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('subscription.write')")
   @PostMapping("/trial")
   public ResponseEntity<SubscriptionResponse> startTrial(@RequestBody StartTrialRequest request) {
     Subscription subscription = subscriptionService.startTrialIfMissing(request.getPlanCode());

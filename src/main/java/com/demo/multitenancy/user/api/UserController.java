@@ -29,7 +29,7 @@ public class UserController {
   }
 
   @Operation(summary = "Create a tenant-scoped user")
-  @PreAuthorize("hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('user.write')")
   @PostMapping
   public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
     UserAccount created = userService.createUser(request.getEmail(), request.getDisplayName());
@@ -37,6 +37,7 @@ public class UserController {
   }
 
   @Operation(summary = "Get user by id")
+  @PreAuthorize("@tenantPermission.has('user.read')")
   @GetMapping("/{id}")
   public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
     return userService.findById(id)
@@ -45,6 +46,7 @@ public class UserController {
   }
 
   @Operation(summary = "Get user by email")
+  @PreAuthorize("@tenantPermission.has('user.read')")
   @GetMapping
   public ResponseEntity<UserResponse> getByEmail(@RequestParam("email") String email) {
     return userService.findByEmail(email)

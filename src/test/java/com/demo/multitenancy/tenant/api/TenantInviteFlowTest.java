@@ -53,4 +53,55 @@ class TenantInviteFlowTest {
         .andExpect(jsonPath("$.tenantId").value("t-invite"))
         .andExpect(jsonPath("$.role").value("MEMBER"));
   }
+
+  @Test
+  void invite_whenNotMember_thenForbidden() throws Exception {
+    mockMvc.perform(post("/api/tenants")
+            .with(jwt().jwt(jwt -> jwt.subject("owner-sub").claim("email", "owner@acme.com")))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"tenantId\":\"t-invite-2\",\"displayName\":\"InviteCo\"}"))
+        .andExpect(status().isOk());
+
+    mockMvc.perform(post("/api/tenants/t-invite-2/invites")
+            .with(jwt().jwt(jwt -> jwt.subject("random-sub")))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"other@acme.com\"}"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void invite_whenMemberRole_thenForbidden() throws Exception {
+    // Owner creates tenant
+    mockMvc.perform(post("/api/tenants")
+            .with(jwt().jwt(jwt -> jwt.subject("owner-sub").claim("email", "owner@acme.com")))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"tenantId\":\"t-invite-3\",\"displayName\":\"InviteCo\"}"))
+        .andExpect(status().isOk());
+
+    // Owner invites a member
+    String inviteToken = mockMvc.perform(post("/api/tenants/t-invite-3/invites")
+            .with(jwt().jwt(jwt -> jwt.subject("owner-sub")))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"member@acme.com\"}"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    String token = inviteToken.replaceAll(".*\"token\"\\s*:\\s*\"([^\"]+)\".*", "$1");
+
+    // Member accepts
+    mockMvc.perform(post("/api/tenants/invites/accept")
+            .with(jwt().jwt(jwt -> jwt.subject("member-sub").claim("email", "member@acme.com")))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"token\":\"" + token + "\"}"))
+        .andExpect(status().isOk());
+
+    // Member tries to invite someone else
+    mockMvc.perform(post("/api/tenants/t-invite-3/invites")
+            .with(jwt().jwt(jwt -> jwt.subject("member-sub")))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"other@acme.com\"}"))
+        .andExpect(status().isForbidden());
+  }
 }

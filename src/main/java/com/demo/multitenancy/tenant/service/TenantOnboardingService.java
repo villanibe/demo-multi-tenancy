@@ -10,6 +10,7 @@ import com.demo.multitenancy.tenant.domain.TenantMembershipRepository;
 import com.demo.multitenancy.tenant.domain.TenantRegistration;
 import com.demo.multitenancy.tenant.domain.TenantRegistrationRepository;
 import com.demo.multitenancy.tenant.domain.TenantRole;
+import com.demo.multitenancy.user.service.TenantAuthorizationBootstrapper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class TenantOnboardingService {
   private final TenantMembershipRepository tenantMembershipRepository;
   private final CurrentPrincipal currentPrincipal;
   private final ControlPlaneExecutor controlPlane;
+  private final TenantAuthorizationBootstrapper authorizationBootstrapper;
   private final Clock clock;
 
   public TenantOnboardingService(
@@ -27,11 +29,13 @@ public class TenantOnboardingService {
       TenantMembershipRepository tenantMembershipRepository,
       CurrentPrincipal currentPrincipal,
       ControlPlaneExecutor controlPlane,
+      TenantAuthorizationBootstrapper authorizationBootstrapper,
       Clock clock) {
     this.tenantRegistrationRepository = tenantRegistrationRepository;
     this.tenantMembershipRepository = tenantMembershipRepository;
     this.currentPrincipal = currentPrincipal;
     this.controlPlane = controlPlane;
+    this.authorizationBootstrapper = authorizationBootstrapper;
     this.clock = clock;
   }
 
@@ -39,15 +43,18 @@ public class TenantOnboardingService {
   public TenantRegistration createTenant(String tenantId, String displayName) {
     PrincipalInfo principal = currentPrincipal.require();
 
-    return controlPlane.run(() -> {
+    TenantRegistration created = controlPlane.run(() -> {
       tenantRegistrationRepository.findByTenantId(tenantId).ifPresent(existing -> {
         throw new IllegalArgumentException("Tenant already exists: " + tenantId);
       });
 
       Instant now = Instant.now(clock);
-      TenantRegistration created = tenantRegistrationRepository.save(new TenantRegistration(tenantId, displayName, now));
+      TenantRegistration registration = tenantRegistrationRepository.save(new TenantRegistration(tenantId, displayName, now));
       tenantMembershipRepository.save(new TenantMembership(tenantId, principal.getSubject(), principal.getEmail(), TenantRole.OWNER, now));
-      return created;
+      return registration;
     });
+
+    authorizationBootstrapper.bootstrapIfMissing(tenantId);
+    return created;
   }
 }

@@ -36,7 +36,7 @@ public class TodoController {
   }
 
   @Operation(summary = "Create a todo list")
-  @PreAuthorize("hasAuthority('SCOPE_todo.write') or hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('todo.write')")
   @PostMapping("/lists")
   public ResponseEntity<TodoListResponse> createList(@Valid @RequestBody CreateTodoListRequest request) {
     TodoList created = todoService.createList(request.getName());
@@ -44,14 +44,14 @@ public class TodoController {
   }
 
   @Operation(summary = "Get todo lists")
-  @PreAuthorize("hasAuthority('SCOPE_todo.read') or hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('todo.read')")
   @GetMapping("/lists")
   public ResponseEntity<List<TodoListResponse>> lists() {
     return ResponseEntity.ok(todoService.getLists().stream().map(TodoController::toResponse).toList());
   }
 
   @Operation(summary = "Add item to list")
-  @PreAuthorize("hasAuthority('SCOPE_todo.write') or hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('todo.write')")
   @PostMapping("/lists/{listId}/items")
   public ResponseEntity<TodoItemResponse> addItem(
       @PathVariable UUID listId,
@@ -65,7 +65,7 @@ public class TodoController {
   }
 
   @Operation(summary = "Get items for list")
-  @PreAuthorize("hasAuthority('SCOPE_todo.read') or hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('todo.read')")
   @GetMapping("/lists/{listId}/items")
   public ResponseEntity<List<TodoItemResponse>> items(@PathVariable UUID listId) {
     try {
@@ -76,7 +76,7 @@ public class TodoController {
   }
 
   @Operation(summary = "Update a todo item")
-  @PreAuthorize("hasAuthority('SCOPE_todo.write') or hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('todo.write')")
   @PatchMapping("/items/{itemId}")
   public ResponseEntity<TodoItemResponse> updateItem(
       @PathVariable UUID itemId,
@@ -90,7 +90,7 @@ public class TodoController {
   }
 
   @Operation(summary = "Delete a todo item")
-  @PreAuthorize("hasAuthority('SCOPE_todo.write') or hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('todo.write')")
   @DeleteMapping("/items/{itemId}")
   public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
     try {

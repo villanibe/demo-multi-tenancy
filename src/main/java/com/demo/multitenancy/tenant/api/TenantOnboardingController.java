@@ -59,7 +59,7 @@ public class TenantOnboardingController {
   }
 
   @Operation(summary = "Invite a member to a tenant")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize("@tenantPermission.hasForTenant(#tenantId, 'tenant.invite.write')")
   @PostMapping("/{tenantId}/invites")
   public ResponseEntity<TenantInviteResponse> invite(
       @PathVariable String tenantId,

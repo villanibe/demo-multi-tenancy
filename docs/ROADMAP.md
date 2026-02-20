@@ -57,10 +57,24 @@ Feature: tenant-scoped TODO lists and items.
   - `POST /api/tenants/invites/accept` accept invite by token
 
 ### Slice 3 — Authorization: roles + permissions
-- Standardize on one approach:
-  - OAuth2 scopes (API-friendly), and/or
-  - tenant-scoped roles/permissions persisted in DB.
-- Add a small “permission service” that maps JWT claims to platform permissions.
+- Add a small permission component (`tenantPermission`) usable from `@PreAuthorize`.
+- Implement mapping rules (in order):
+  - `SCOPE_admin` / `ROLE_ADMIN` => allow everything
+  - `SCOPE_{permissionCode}` => allow
+  - fallback: control-plane membership role => allow based on persisted tenant roles/permissions
+- Apply to endpoints (initial rollout):
+  - TODO API (`todo.read`, `todo.write`)
+  - Users API (`user.read`, `user.write`)
+  - Subscription API (`subscription.read`, `subscription.write`)
+  - Billing API (`billing.write`)
+  - Tenant invite API (`tenant.invite.write`)
+
+- Organization access API (tenant-scoped):
+  - `GET /api/organization-access/roles` (scope: `authz.read`)
+  - `POST /api/organization-access/roles` (scope: `authz.write`)
+  - `PUT /api/organization-access/roles/{roleName}/permissions/{permissionCode}` (scope: `authz.write`)
+  - `DELETE /api/organization-access/roles/{roleName}/permissions/{permissionCode}` (scope: `authz.write`)
+  - `GET /api/organization-access/permissions` (scope: `authz.read`)
 
 ### Slice 4 — Subscriptions & entitlements
 - Ensure subscription is tenant-scoped and drives entitlements.

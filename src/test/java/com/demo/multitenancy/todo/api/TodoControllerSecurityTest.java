@@ -12,19 +12,24 @@ import com.demo.multitenancy.tenant.TenantIdResolver;
 import com.demo.multitenancy.todo.domain.TodoList;
 import com.demo.multitenancy.todo.service.TodoService;
 import com.demo.multitenancy.security.SecurityConfiguration;
+import com.demo.multitenancy.security.authorization.TenantPermission;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.mockito.Mockito;
+
 @ActiveProfiles("test")
 @WebMvcTest(controllers = TodoController.class)
-@Import(SecurityConfiguration.class)
+@Import({ SecurityConfiguration.class, TodoControllerSecurityTest.TestAuthConfig.class })
 class TodoControllerSecurityTest {
 
   @Autowired
@@ -36,6 +41,17 @@ class TodoControllerSecurityTest {
   @MockitoBean
   private TenantIdResolver tenantIdResolver;
 
+  @Autowired
+  private TenantPermission tenantPermission;
+
+  @TestConfiguration
+  static class TestAuthConfig {
+    @Bean(name = "tenantPermission")
+    TenantPermission tenantPermission() {
+      return Mockito.mock(TenantPermission.class);
+    }
+  }
+
   @Test
   void lists_withoutJwt_thenUnauthorized() throws Exception {
     mockMvc.perform(get("/api/todos/lists"))
@@ -44,6 +60,7 @@ class TodoControllerSecurityTest {
 
   @Test
   void lists_withJwtButMissingScope_thenForbidden() throws Exception {
+    when(tenantPermission.has("todo.read")).thenReturn(false);
     when(todoService.getLists()).thenReturn(List.of(new TodoList("Any", Instant.parse("2026-02-20T00:00:00Z"))));
 
     mockMvc.perform(get("/api/todos/lists")
@@ -54,6 +71,7 @@ class TodoControllerSecurityTest {
 
   @Test
   void lists_withJwtAndScope_thenOk() throws Exception {
+    when(tenantPermission.has("todo.read")).thenReturn(true);
     when(todoService.getLists()).thenReturn(List.of(new TodoList("Any", Instant.parse("2026-02-20T00:00:00Z"))));
 
     mockMvc.perform(get("/api/todos/lists")

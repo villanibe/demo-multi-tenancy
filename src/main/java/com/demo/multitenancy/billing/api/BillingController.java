@@ -30,7 +30,7 @@ public class BillingController {
   }
 
   @Operation(summary = "Create a checkout URL for a plan")
-  @PreAuthorize("hasAuthority('SCOPE_admin') or hasRole('ADMIN')")
+  @PreAuthorize("@tenantPermission.has('billing.write')")
   @PostMapping("/checkout")
   public ResponseEntity<Map<String, Object>> checkout(@Valid @RequestBody CheckoutRequest request) {
     String tenantId = tenantGuard.requireTenantId();
