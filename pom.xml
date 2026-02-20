@@ -12,7 +12,7 @@
 
   <groupId>com.demo</groupId>
   <artifactId>demo-multi-tenancy</artifactId>
-  <version>0.0.7</version>
+  <version>0.0.8</version>
   <name>demo-multi-tenancy</name>
   <description>Micro-SaaS multi-tenant platform blueprint (Java 21 / Spring Boot)</description>
 

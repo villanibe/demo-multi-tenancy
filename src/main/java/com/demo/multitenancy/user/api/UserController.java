@@ -29,7 +29,7 @@ public class UserController {
   }
 
   @Operation(summary = "Create a tenant-scoped user")
-  @PreAuthorize("@tenantPermission.has('user.write')")
+  @PreAuthorize("@tenantPermission.has('user.write') and @tenantPlanFeature.has('plan.users.manage')")
   @PostMapping
   public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
     UserAccount created = userService.createUser(request.getEmail(), request.getDisplayName());

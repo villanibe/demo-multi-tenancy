@@ -29,7 +29,7 @@ class SubscriptionAuthorizationTest {
 
   @Test
   void trial_whenMember_thenForbidden_butCurrentAllowed() throws Exception {
-    planRepository.save(new Plan("basic", "Basic", 7));
+        planRepository.save(new Plan("basic-sub", "Basic", 7));
 
     // Owner creates tenant
     mockMvc.perform(post("/api/tenants")
@@ -43,7 +43,7 @@ class SubscriptionAuthorizationTest {
             .header("X-Tenant-Id", "t-sub")
             .with(jwt().jwt(jwt -> jwt.subject("owner-sub").claim("tenant_id", "t-sub")))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"planCode\":\"basic\"}"))
+            .content("{\"planCode\":\"basic-sub\"}"))
         .andExpect(status().isOk());
 
     // Owner invites member
@@ -70,7 +70,7 @@ class SubscriptionAuthorizationTest {
             .header("X-Tenant-Id", "t-sub")
             .with(jwt().jwt(jwt -> jwt.subject("member-sub").claim("tenant_id", "t-sub")))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"planCode\":\"basic\"}"))
+            .content("{\"planCode\":\"basic-sub\"}"))
         .andExpect(status().isForbidden());
 
     // Member can read current

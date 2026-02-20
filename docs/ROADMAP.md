@@ -76,14 +76,24 @@ Feature: tenant-scoped TODO lists and items.
   - `DELETE /api/organization-access/roles/{roleName}/permissions/{permissionCode}` (scope: `authz.write`)
   - `GET /api/organization-access/permissions` (scope: `authz.read`)
 
-### Slice 4 — Subscriptions & entitlements
-- Ensure subscription is tenant-scoped and drives entitlements.
-- Add plan/feature flags and a tenant entitlement check used by controllers/services.
+### Slice 4 — Subscriptions, plan features & pricing
+- Subscription is tenant-scoped and drives which plan features are active.
+- Plans are global catalog entries with plan feature codes (e.g. `plan.users.manage`).
+- Add pricing as a first-class model (`PlanPrice`) and store provider-specific price identifiers.
+
+Notes:
+- `PlanPrice` supports multiple intervals (monthly/yearly) and a provider price-id map.
+- Billing checkout takes `planCode` (+ optional interval) and resolves the provider price id before delegating to the `PaymentGateway`.
 
 ### Slice 5 — Payments provider abstraction
 - Keep `PaymentGateway` as the stable interface.
 - Add a provider registry (Stripe, Paddle, etc.) and minimal webhook processing.
 - Add idempotency and tenant-aware reconciliation.
+
+Next payment lifecycle steps:
+- Persist a "pending checkout" record keyed by tenant + provider session id.
+- On webhook success, transition tenant `Subscription` to `ACTIVE` and set `currentPeriodEndsAt` based on the purchased interval.
+- Store provider customer/subscription ids to support upgrades/downgrades and cancellation.
 
 ### Slice 6 — Hardening multi-tenancy modes
 - Validate behavior in all modes (`COLUMN`, `SCHEMA`, `DATABASE`).

@@ -10,6 +10,7 @@ import java.util.Optional;
 import com.demo.multitenancy.tenant.TenantIdResolver;
 import com.demo.multitenancy.security.SecurityConfiguration;
 import com.demo.multitenancy.security.authorization.TenantPermission;
+import com.demo.multitenancy.subscription.planfeature.TenantPlanFeature;
 import com.demo.multitenancy.user.domain.UserAccount;
 import com.demo.multitenancy.user.service.UserService;
 
@@ -47,6 +48,11 @@ class UserControllerSecurityTest {
     @Bean(name = "tenantPermission")
     TenantPermission tenantPermission() {
       return Mockito.mock(TenantPermission.class);
+    }
+
+    @Bean(name = "tenantPlanFeature")
+    TenantPlanFeature tenantPlanFeature() {
+      return Mockito.mock(TenantPlanFeature.class);
     }
   }
 

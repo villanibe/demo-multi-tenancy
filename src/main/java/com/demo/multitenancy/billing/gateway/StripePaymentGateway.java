@@ -18,7 +18,7 @@ public class StripePaymentGateway implements PaymentGateway {
   }
 
   @Override
-  public String createCheckoutUrl(String tenantId, String planCode) {
+  public String createCheckoutUrl(String tenantId, String providerPriceId, String planCode) {
     String apiKey = paymentProperties.getStripe().getApiKey();
     if (apiKey == null || apiKey.isBlank()) {
       // Intentionally fail fast: in real integration you would call Stripe API.
@@ -26,6 +26,6 @@ public class StripePaymentGateway implements PaymentGateway {
     }
 
     // Placeholder URL for the blueprint.
-    return "https://checkout.stripe.com/pay/placeholder?tenant=" + tenantId + "&plan=" + planCode;
+    return "https://checkout.stripe.com/pay/placeholder?tenant=" + tenantId + "&plan=" + planCode + "&price=" + providerPriceId;
   }
 }

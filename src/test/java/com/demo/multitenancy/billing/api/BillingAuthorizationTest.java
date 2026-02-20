@@ -5,6 +5,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.demo.multitenancy.security.authorization.PermissionCodes;
+import com.demo.multitenancy.subscription.domain.BillingInterval;
+import com.demo.multitenancy.subscription.domain.Plan;
+import com.demo.multitenancy.subscription.domain.PlanPrice;
+import com.demo.multitenancy.subscription.domain.PlanPriceRepository;
+import com.demo.multitenancy.subscription.domain.PlanRepository;
 import com.demo.multitenancy.tenant.TenantContextExecutor;
 import com.demo.multitenancy.user.domain.Permission;
 import com.demo.multitenancy.user.domain.PermissionRepository;
@@ -34,6 +39,12 @@ class BillingAuthorizationTest {
     @Autowired
     private TenantContextExecutor tenantContextExecutor;
 
+        @Autowired
+        private PlanRepository planRepository;
+
+        @Autowired
+        private PlanPriceRepository planPriceRepository;
+
     @Autowired
     private RoleRepository roleRepository;
 
@@ -42,6 +53,11 @@ class BillingAuthorizationTest {
 
   @Test
     void checkout_whenMember_thenForbidden_thenAfterGrantPermission_thenOk() throws Exception {
+        Plan basic = planRepository.save(new Plan("basic-bill", "Basic", 7));
+        PlanPrice monthly = planPriceRepository.save(new PlanPrice(basic, BillingInterval.MONTHLY, "USD", 1900));
+        monthly.getProviderPriceIds().put("stripe", "price_basic_monthly");
+        planPriceRepository.save(monthly);
+
     // Owner creates tenant
     mockMvc.perform(post("/api/tenants")
             .with(jwt().jwt(jwt -> jwt.subject("owner-sub").claim("email", "owner@acme.com")))
@@ -73,7 +89,7 @@ class BillingAuthorizationTest {
             .header("X-Tenant-Id", "t-bill")
             .with(jwt().jwt(jwt -> jwt.subject("member-sub").claim("tenant_id", "t-bill")))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"planCode\":\"basic\"}"))
+            .content("{\"planCode\":\"basic-bill\"}"))
         .andExpect(status().isForbidden());
 
     // Flip tenant-scoped permissions in DB: grant billing.write to MEMBER
@@ -96,7 +112,7 @@ class BillingAuthorizationTest {
             .header("X-Tenant-Id", "t-bill")
             .with(jwt().jwt(jwt -> jwt.subject("member-sub").claim("tenant_id", "t-bill")))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"planCode\":\"basic\"}"))
+            .content("{\"planCode\":\"basic-bill\"}"))
         .andExpect(status().isOk());
   }
 }

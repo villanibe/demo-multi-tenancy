@@ -1,11 +1,16 @@
 package com.demo.multitenancy.subscription.domain;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -33,6 +38,11 @@ public class Plan {
   @Column(name = "trial_days", nullable = false)
   private int trialDays;
 
+  @ElementCollection
+  @CollectionTable(name = "plan_entitlements", joinColumns = @JoinColumn(name = "plan_id"))
+  @Column(name = "entitlement_code", nullable = false)
+  private Set<String> planFeatureCodes = new HashSet<>();
+
   protected Plan() {
   }
 
@@ -56,5 +66,9 @@ public class Plan {
 
   public int getTrialDays() {
     return trialDays;
+  }
+
+  public Set<String> getPlanFeatureCodes() {
+    return planFeatureCodes;
   }
 }
