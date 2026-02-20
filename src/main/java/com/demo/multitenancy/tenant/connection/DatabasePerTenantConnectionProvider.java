@@ -54,7 +54,7 @@ public class DatabasePerTenantConnectionProvider implements MultiTenantConnectio
   }
 
   @Override
-  public boolean isUnwrappableAs(Class unwrapType) {
+  public boolean isUnwrappableAs(Class<?> unwrapType) {
     return false;
   }
 

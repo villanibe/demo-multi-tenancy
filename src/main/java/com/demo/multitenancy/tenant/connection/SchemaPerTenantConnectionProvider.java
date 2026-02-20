@@ -53,7 +53,7 @@ public class SchemaPerTenantConnectionProvider implements MultiTenantConnectionP
   }
 
   @Override
-  public boolean isUnwrappableAs(Class unwrapType) {
+  public boolean isUnwrappableAs(Class<?> unwrapType) {
     return false;
   }
 

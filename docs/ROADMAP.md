@@ -47,10 +47,14 @@ Feature: tenant-scoped TODO lists and items.
 
 ## Next slices (suggested order)
 
-### Slice 2 — Identity & tenant membership
-- Add **tenant membership** model: user belongs to one or more tenants.
-- Add endpoints for tenant onboarding and membership invites.
-- Introduce a stable `principal` representation (subject id, email, tenant memberships).
+### Slice 2 — Identity & tenant membership (done)
+- Added stable principal helper (subject + email from JWT).
+- Added control-plane tenant registration + memberships + invite flow.
+- API:
+  - `POST /api/tenants` create tenant (creator becomes `OWNER`)
+  - `GET /api/tenants/mine` list my memberships
+  - `POST /api/tenants/{tenantId}/invites` create invite (requires `OWNER`/`ADMIN`)
+  - `POST /api/tenants/invites/accept` accept invite by token
 
 ### Slice 3 — Authorization: roles + permissions
 - Standardize on one approach:

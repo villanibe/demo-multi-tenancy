@@ -82,11 +82,11 @@ public class TenantConfiguration {
         hibernateProperties.put("hibernate.multiTenancy", "DISCRIMINATOR");
       } else if (mode == TenantMode.SCHEMA) {
         hibernateProperties.put("hibernate.multiTenancy", "SCHEMA");
-        MultiTenantConnectionProvider<String> provider = applicationContext.getBean(MultiTenantConnectionProvider.class);
+        MultiTenantConnectionProvider<?> provider = applicationContext.getBean(MultiTenantConnectionProvider.class);
         hibernateProperties.put(MultiTenancySettings.MULTI_TENANT_CONNECTION_PROVIDER, provider);
       } else if (mode == TenantMode.DATABASE) {
         hibernateProperties.put("hibernate.multiTenancy", "DATABASE");
-        MultiTenantConnectionProvider<String> provider = applicationContext.getBean(MultiTenantConnectionProvider.class);
+        MultiTenantConnectionProvider<?> provider = applicationContext.getBean(MultiTenantConnectionProvider.class);
         hibernateProperties.put(MultiTenancySettings.MULTI_TENANT_CONNECTION_PROVIDER, provider);
       }
 
