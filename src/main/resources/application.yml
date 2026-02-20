@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: demo-multi-tenancy
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:app}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:app}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:app}}
+    hikari:
+      # 512MB / 1 vCPU friendly defaults
+      maximum-pool-size: ${DB_POOL_MAX:4}
+      minimum-idle: ${DB_POOL_MIN_IDLE:0}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:2000}
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT_MS:1000}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:60000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:1500000} # 25m (keep below common LB/DB timeouts)
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # For local dev/tests you can use symmetric signing key via app.security.jwt.*
+          # For production, prefer issuer-uri / jwk-set-uri
+          issuer-uri: ""
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+app:
+  tenancy:
+    mode: COLUMN # COLUMN | SCHEMA | DATABASE
+    header: X-Tenant-Id
+    claim: tenant_id
+    rls:
+      enabled: false
+      postgres:
+        settingName: app.tenant_id
+
+  security:
+    jwt:
+      # Local dev only: HS256 signing key (min 32 bytes). In prod, use issuer/jwks.
+      hs256:
+        enabled: true
+        secret: "change-me-change-me-change-me-32bytes!!"
+
+  payments:
+    provider: stripe
+    stripe:
+      apiKey: ""

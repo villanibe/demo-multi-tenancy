@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ""
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 0
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+app:
+  security:
+    jwt:
+      hs256:
+        enabled: true
+        secret: "test-test-test-test-test-test-test-32!!"
+  tenancy:
+    mode: COLUMN
+    header: X-Tenant-Id
+    claim: tenant_id

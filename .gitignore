@@ -1,0 +1,13 @@
+target/
+*.log
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+
+# Maven wrapper download cache
+.mvn/wrapper/*.jar

@@ -1,0 +1,51 @@
+services:
+  # Postgres is defined in docker-compose.yml (base). This overlay intentionally
+  # does not apply resource limits to it; the goal is to constrain only the API.
+  postgres: {}
+
+  api:
+    mem_limit: 512m
+    cpus: "1.0"
+    environment:
+      # With virtual threads enabled, Tomcat request handling uses virtual threads;
+      # this still acts as a concurrency/backpressure knob for a 1 vCPU container.
+      SERVER_TOMCAT_THREADS_MAX: "8"
+      SERVER_TOMCAT_THREADS_MIN_SPARE: "2"
+
+      # Connection-level backpressure (separate from request threads).
+      # max-connections: max concurrent connections accepted by the connector.
+      # accept-count: queue length (“waiting room”) once max-connections is reached.
+      SERVER_TOMCAT_MAX_CONNECTIONS: "100"
+      SERVER_TOMCAT_ACCEPT_COUNT: "50"
+
+      # Enables virtual threads for Spring executors AND Tomcat request handling.
+      # Spring Boot (3.2+) automatically wires embedded Tomcat to a virtual-thread executor when enabled.
+      SPRING_THREADS_VIRTUAL_ENABLED: "true"
+
+      SPRING_TASK_EXECUTION_POOL_CORE_SIZE: "2"
+      SPRING_TASK_EXECUTION_POOL_MAX_SIZE: "4"
+      SPRING_TASK_SCHEDULING_POOL_SIZE: "1"
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "4"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "0"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "2000"
+      SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT: "1000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "60000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1500000"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    restart: unless-stopped
