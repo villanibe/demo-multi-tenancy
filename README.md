@@ -2,6 +2,8 @@
 
 Blueprint service for a micro‑SaaS platform with multi‑tenancy, JWT/OAuth2 resource server security, and core building blocks (users, subscriptions, metering, payments gateway).
 
+Project roadmap (incremental slices): see docs/ROADMAP.md.
+
 ## Requirements
 
 - Java 21

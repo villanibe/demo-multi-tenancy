@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import com.demo.multitenancy.tenant.TenantIdResolver;
 import com.demo.multitenancy.user.domain.UserAccount;
@@ -15,8 +14,8 @@ import com.demo.multitenancy.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @ActiveProfiles("test")
@@ -26,10 +25,10 @@ class UserControllerSecurityTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @MockBean
+  @MockitoBean
   private UserService userService;
 
-  @MockBean
+  @MockitoBean
   private TenantIdResolver tenantIdResolver;
 
   @Test
@@ -40,7 +39,6 @@ class UserControllerSecurityTest {
 
   @Test
   void getByEmail_withJwt_thenOk() throws Exception {
-    UUID id = UUID.randomUUID();
     when(userService.findByEmail("a@b.com")).thenReturn(Optional.of(new UserAccount("a@b.com", "Alice")));
 
     mockMvc.perform(get("/api/users")
