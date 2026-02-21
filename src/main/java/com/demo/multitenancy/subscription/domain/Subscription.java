@@ -52,4 +52,11 @@ public class Subscription extends TenantScopedEntity {
   public Instant getCurrentPeriodEndsAt() {
     return currentPeriodEndsAt;
   }
+
+  public void activatePaid(String planCode, Instant currentPeriodEndsAt) {
+    this.planCode = planCode;
+    this.status = SubscriptionStatus.ACTIVE;
+    this.trialEndsAt = null;
+    this.currentPeriodEndsAt = currentPeriodEndsAt;
+  }
 }

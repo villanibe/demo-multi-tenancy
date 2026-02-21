@@ -12,6 +12,9 @@ spring:
       ddl-auto: create-drop
 
 app:
+  payments:
+    webhooks:
+      secret: test-webhook-secret
   security:
     jwt:
       hs256:

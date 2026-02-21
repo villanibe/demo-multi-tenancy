@@ -1,7 +1,14 @@
 package com.demo.multitenancy.billing.gateway;
 
+import com.demo.multitenancy.subscription.domain.BillingInterval;
+
 public interface PaymentGateway {
   String provider();
 
-  String createCheckoutUrl(String tenantId, String providerPriceId, String planCode);
+  PaymentGatewayCheckoutSession createCheckoutSession(
+      String tenantId,
+      String providerPriceId,
+      String planCode,
+      BillingInterval interval);
 }
+

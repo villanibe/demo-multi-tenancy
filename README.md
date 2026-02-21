@@ -65,6 +65,16 @@ Supported modes via `app.tenancy.mode` (`COLUMN | SCHEMA | DATABASE`):
 - `SCHEMA`: switches DB schema per tenant (requires tenant schemas to exist).
 - `DATABASE`: routes to tenant-specific datasources (configure tenant map).
 
+### Postgres RLS (defense-in-depth)
+
+For Postgres, you can optionally enable Row-Level Security (RLS) as a defense-in-depth mechanism for `COLUMN` mode.
+
+- Enable the `rls` profile (sets `app.tenancy.mode=COLUMN` and enables `app.tenancy.rls.*`):
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=rls`
+  - or `java -jar target/*.jar --spring.profiles.active=rls`
+
+RLS only helps if you also create Postgres policies (example: `tenant_id = current_setting('app.tenant_id')`) for the tables you want protected.
+
 ## Security
 
 The API is protected via Spring Security OAuth2 Resource Server (JWT). For local/dev, HS256 is enabled by default via `app.security.jwt.hs256.*`.
@@ -81,6 +91,14 @@ Swagger UI:
 ## Tests
 
 - `./mvnw test`
+
+## Payments (Stripe / Virtual)
+
+Select the payments provider via `app.payments.provider`:
+
+- Virtual (local blueprint): set `app.payments.provider=VIRTUAL` and configure `app.payments.webhooks.secret`.
+  - Checkout: `POST /api/billing/checkout` returns a `sessionId`.
+  - Webhook simulation: `POST /api/billing/webhooks/virtual` with header `X-Webhook-Secret: <secret>`.
 
 ## Actuator
 

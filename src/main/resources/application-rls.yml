@@ -1,0 +1,19 @@
+# Postgres Row-Level Security (RLS) profile.
+#
+# Enable with:
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=rls
+# or:
+#   java -jar app.jar --spring.profiles.active=rls
+#
+# Notes:
+# - This project sets the per-connection Postgres session setting (see app.tenancy.rls.postgres.settingName)
+#   so that RLS policies can safely enforce tenant isolation in COLUMN mode.
+# - RLS is defense-in-depth; you still want correct tenant scoping in the application.
+
+app:
+  tenancy:
+    mode: COLUMN
+    rls:
+      enabled: true
+      postgres:
+        settingName: app.tenant_id

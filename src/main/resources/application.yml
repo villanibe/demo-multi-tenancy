@@ -68,6 +68,11 @@ app:
         secret: "change-me-change-me-change-me-32bytes!!"
 
   payments:
-    provider: stripe
+    # stripe | virtual
+    provider: virtual
     stripe:
       apiKey: ""
+    webhooks:
+      # Virtual provider: request must include header `X-Webhook-Secret` matching this value.
+      # Stripe provider will use a signing secret (future slice).
+      secret: "dev-secret"

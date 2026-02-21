@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.demo.multitenancy.billing.gateway.PaymentGateway;
 import com.demo.multitenancy.billing.gateway.PaymentGatewayFactory;
+import com.demo.multitenancy.billing.service.BillingCheckoutService;
 import com.demo.multitenancy.user.service.TenantGuard;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,55 +19,46 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.demo.multitenancy.subscription.domain.BillingInterval;
-import com.demo.multitenancy.subscription.domain.PlanPrice;
-import com.demo.multitenancy.subscription.domain.PlanPriceRepository;
-import com.demo.multitenancy.subscription.domain.PlanRepository;
 
 @RestController
 @RequestMapping("/api/billing")
 public class BillingController {
   private final PaymentGatewayFactory gatewayFactory;
   private final TenantGuard tenantGuard;
-  private final PlanRepository planRepository;
-  private final PlanPriceRepository planPriceRepository;
+  private final BillingCheckoutService billingCheckoutService;
 
   public BillingController(
       PaymentGatewayFactory gatewayFactory,
       TenantGuard tenantGuard,
-      PlanRepository planRepository,
-      PlanPriceRepository planPriceRepository) {
+      BillingCheckoutService billingCheckoutService) {
     this.gatewayFactory = gatewayFactory;
     this.tenantGuard = tenantGuard;
-    this.planRepository = planRepository;
-    this.planPriceRepository = planPriceRepository;
+    this.billingCheckoutService = billingCheckoutService;
   }
 
   @Operation(summary = "Create a checkout URL for a plan")
   @PreAuthorize("@tenantPermission.has('billing.write')")
   @PostMapping("/checkout")
-  public ResponseEntity<Map<String, Object>> checkout(@Valid @RequestBody CheckoutRequest request) {
+  public ResponseEntity<Map<String, Object>> checkout(
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+      @Valid @RequestBody CheckoutRequest request) {
     String tenantId = tenantGuard.requireTenantId();
     PaymentGateway gateway = gatewayFactory.current();
 
-    String planCode = request.getPlanCode();
-    planRepository.findByCode(planCode)
-        .orElseThrow(() -> new IllegalArgumentException("Unknown plan: " + planCode));
+    BillingCheckoutService.CheckoutSessionResult result = billingCheckoutService.createCheckout(
+        tenantId,
+        gateway,
+        request.getPlanCode(),
+        request.getInterval(),
+        idempotencyKey);
 
-    PlanPrice planPrice = planPriceRepository
-        .findByPlan_CodeAndInterval(planCode, request.getInterval())
-        .orElseThrow(() -> new IllegalArgumentException("No price configured for plan " + planCode + " (" + request.getInterval() + ")"));
-
-    String providerPriceId = planPrice.getProviderPriceIds().get(gateway.provider());
-    if (providerPriceId == null || providerPriceId.isBlank()) {
-      throw new IllegalArgumentException("No provider price id configured for provider '" + gateway.provider() + "' and plan " + planCode);
-    }
-
-    String url = gateway.createCheckoutUrl(tenantId, providerPriceId, planCode);
     return ResponseEntity.ok(Map.of(
         "provider", gateway.provider(),
-        "url", url));
+        "sessionId", result.sessionId(),
+        "url", result.url()));
   }
 
   public static class CheckoutRequest {

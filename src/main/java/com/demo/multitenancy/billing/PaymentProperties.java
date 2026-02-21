@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PaymentProperties {
   private PaymentProvider provider = PaymentProvider.STRIPE;
   private final Stripe stripe = new Stripe();
+  private final Webhooks webhooks = new Webhooks();
 
   public PaymentProvider getProvider() {
     return provider;
@@ -19,6 +20,10 @@ public class PaymentProperties {
     return stripe;
   }
 
+  public Webhooks getWebhooks() {
+    return webhooks;
+  }
+
   public static class Stripe {
     private String apiKey;
 
@@ -28,6 +33,18 @@ public class PaymentProperties {
 
     public void setApiKey(String apiKey) {
       this.apiKey = apiKey;
+    }
+  }
+
+  public static class Webhooks {
+    private String secret;
+
+    public String getSecret() {
+      return secret;
+    }
+
+    public void setSecret(String secret) {
+      this.secret = secret;
     }
   }
 }

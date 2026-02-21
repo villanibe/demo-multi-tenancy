@@ -66,6 +66,10 @@ public class PlanCatalogSeeder implements ApplicationRunner {
 
     seedPrice(plan, BillingInterval.MONTHLY, "USD", monthlyCents, "stripe", "price_" + code + "_monthly");
     seedPrice(plan, BillingInterval.YEARLY, "USD", yearlyCents, "stripe", "price_" + code + "_yearly");
+
+    // Virtual provider for local blueprint checkout/webhook flows.
+    seedPrice(plan, BillingInterval.MONTHLY, "USD", monthlyCents, "virtual", "virt_price_" + code + "_monthly");
+    seedPrice(plan, BillingInterval.YEARLY, "USD", yearlyCents, "virtual", "virt_price_" + code + "_yearly");
   }
 
   private void seedPrice(

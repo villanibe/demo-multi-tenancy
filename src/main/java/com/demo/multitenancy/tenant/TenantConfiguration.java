@@ -9,10 +9,12 @@ import com.demo.multitenancy.tenant.connection.DatabasePerTenantConnectionProvid
 import com.demo.multitenancy.tenant.connection.NoopTenantConnectionCustomizer;
 import com.demo.multitenancy.tenant.connection.PostgresRlsTenantConnectionCustomizer;
 import com.demo.multitenancy.tenant.connection.SchemaPerTenantConnectionProvider;
+import com.demo.multitenancy.tenant.connection.TenantAwareDataSource;
 import com.demo.multitenancy.tenant.connection.TenantConnectionCustomizer;
 
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -36,6 +38,29 @@ public class TenantConfiguration {
       return new NoopTenantConnectionCustomizer();
     }
     return new PostgresRlsTenantConnectionCustomizer(properties.getRls().getPostgres().getSettingName());
+  }
+
+  @Bean
+  @ConditionalOnProperty(prefix = "app.tenancy.rls", name = "enabled", havingValue = "true")
+  public static BeanPostProcessor rlsAwareDataSourcePostProcessor(
+      TenantProperties tenantProperties,
+      CurrentTenantIdentifierResolver<String> tenantIdentifierResolver,
+      TenantConnectionCustomizer tenantConnectionCustomizer) {
+    return new BeanPostProcessor() {
+      @Override
+      public Object postProcessAfterInitialization(Object bean, String beanName) {
+        if (!"dataSource".equals(beanName)) {
+          return bean;
+        }
+        if (!(bean instanceof DataSource dataSource)) {
+          return bean;
+        }
+        if (tenantProperties.getMode() != TenantMode.COLUMN) {
+          return bean;
+        }
+        return new TenantAwareDataSource(dataSource, tenantIdentifierResolver, tenantConnectionCustomizer);
+      }
+    };
   }
 
   @Bean
