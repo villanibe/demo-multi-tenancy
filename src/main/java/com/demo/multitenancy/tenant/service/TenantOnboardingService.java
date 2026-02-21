@@ -57,4 +57,39 @@ public class TenantOnboardingService {
     authorizationBootstrapper.bootstrapIfMissing(tenantId);
     return created;
   }
+
+  @Transactional
+  public TenantRegistration ensureTenantExistsAsOwner(String tenantId, String displayName, String ownerSubject, String ownerEmail) {
+    return controlPlane.run(() -> {
+      return tenantRegistrationRepository.findByTenantId(tenantId)
+          .orElseGet(() -> createTenantAsOwner(tenantId, displayName, ownerSubject, ownerEmail));
+    });
+  }
+
+  @Transactional
+  public TenantRegistration createTenantAsOwner(String tenantId, String displayName, String ownerSubject, String ownerEmail) {
+    if (tenantId == null || tenantId.isBlank()) {
+      throw new IllegalArgumentException("tenantId is required");
+    }
+    if (displayName == null || displayName.isBlank()) {
+      throw new IllegalArgumentException("displayName is required");
+    }
+    if (ownerSubject == null || ownerSubject.isBlank()) {
+      throw new IllegalArgumentException("ownerSubject is required");
+    }
+
+    TenantRegistration created = controlPlane.run(() -> {
+      tenantRegistrationRepository.findByTenantId(tenantId).ifPresent(existing -> {
+        throw new IllegalArgumentException("Tenant already exists: " + tenantId);
+      });
+
+      Instant now = Instant.now(clock);
+      TenantRegistration registration = tenantRegistrationRepository.save(new TenantRegistration(tenantId, displayName, now));
+      tenantMembershipRepository.save(new TenantMembership(tenantId, ownerSubject, ownerEmail, TenantRole.OWNER, now));
+      return registration;
+    });
+
+    authorizationBootstrapper.bootstrapIfMissing(tenantId);
+    return created;
+  }
 }

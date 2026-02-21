@@ -6,6 +6,7 @@ import java.util.List;
 import com.demo.multitenancy.tenant.domain.TenantInvite;
 import com.demo.multitenancy.tenant.domain.TenantMembership;
 import com.demo.multitenancy.tenant.domain.TenantRegistration;
+import com.demo.multitenancy.tenant.domain.TenantRole;
 import com.demo.multitenancy.tenant.service.TenantInviteService;
 import com.demo.multitenancy.tenant.service.TenantMembershipService;
 import com.demo.multitenancy.tenant.service.TenantOnboardingService;
@@ -65,7 +66,8 @@ public class TenantOnboardingController {
       @PathVariable String tenantId,
       @Valid @RequestBody CreateInviteRequest request) {
     try {
-      TenantInvite invite = inviteService.createInvite(tenantId, request.getEmail());
+      TenantRole role = request.getRole() != null ? TenantRole.valueOf(request.getRole()) : TenantRole.MEMBER;
+      TenantInvite invite = inviteService.createInvite(tenantId, request.getEmail(), role);
       return ResponseEntity.ok(toResponse(invite));
     } catch (IllegalArgumentException | IllegalStateException ex) {
       throw new ResponseStatusException(BAD_REQUEST, ex.getMessage());
@@ -108,6 +110,7 @@ public class TenantOnboardingController {
     response.setEmail(invite.getEmail());
     response.setToken(invite.getToken());
     response.setStatus(invite.getStatus().name());
+    response.setRole(invite.getRole() != null ? invite.getRole().name() : null);
     response.setExpiresAt(invite.getExpiresAt());
     return response;
   }
@@ -170,12 +173,23 @@ public class TenantOnboardingController {
     @NotBlank
     private String email;
 
+    // Optional: OWNER | ADMIN | MEMBER
+    private String role;
+
     public String getEmail() {
       return email;
     }
 
     public void setEmail(String email) {
       this.email = email;
+    }
+
+    public String getRole() {
+      return role;
+    }
+
+    public void setRole(String role) {
+      this.role = role;
     }
   }
 
@@ -245,6 +259,7 @@ public class TenantOnboardingController {
     private String email;
     private String token;
     private String status;
+    private String role;
     private Instant expiresAt;
 
     public String getTenantId() {
@@ -277,6 +292,14 @@ public class TenantOnboardingController {
 
     public void setStatus(String status) {
       this.status = status;
+    }
+
+    public String getRole() {
+      return role;
+    }
+
+    public void setRole(String role) {
+      this.role = role;
     }
 
     public Instant getExpiresAt() {

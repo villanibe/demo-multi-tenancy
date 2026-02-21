@@ -41,7 +41,7 @@ public class TenantInviteService {
   }
 
   @Transactional
-  public TenantInvite createInvite(String tenantId, String email) {
+  public TenantInvite createInvite(String tenantId, String email, TenantRole role) {
     PrincipalInfo principal = currentPrincipal.require();
 
     return controlPlane.run(() -> {
@@ -55,13 +55,25 @@ public class TenantInviteService {
       Instant now = Instant.now(clock);
       String token = UUID.randomUUID().toString();
       Instant expiresAt = now.plus(DEFAULT_INVITE_TTL_DAYS, ChronoUnit.DAYS);
-      return inviteRepository.save(new TenantInvite(tenantId, email, token, now, expiresAt));
+      return inviteRepository.save(new TenantInvite(tenantId, email, token, role != null ? role : TenantRole.MEMBER, now, expiresAt));
     });
   }
 
   @Transactional
   public TenantMembership acceptInvite(String token) {
     PrincipalInfo principal = currentPrincipal.require();
+
+    return acceptInviteAs(token, principal.getSubject(), principal.getEmail());
+  }
+
+  @Transactional
+  public TenantMembership acceptInviteAs(String token, String subject, String email) {
+    if (subject == null || subject.isBlank()) {
+      throw new IllegalArgumentException("subject is required");
+    }
+    if (email == null || email.isBlank()) {
+      throw new IllegalArgumentException("email is required");
+    }
 
     return controlPlane.run(() -> {
       TenantInvite invite = inviteRepository.findByToken(token)
@@ -76,9 +88,13 @@ public class TenantInviteService {
         throw new IllegalStateException("Invite expired");
       }
 
-      TenantMembership membership = membershipRepository.findByTenantIdAndSubject(invite.getTenantId(), principal.getSubject())
+      if (invite.getEmail() != null && !invite.getEmail().equalsIgnoreCase(email)) {
+        throw new IllegalStateException("Invite email mismatch");
+      }
+
+      TenantMembership membership = membershipRepository.findByTenantIdAndSubject(invite.getTenantId(), subject)
           .orElseGet(() -> membershipRepository.save(
-              new TenantMembership(invite.getTenantId(), principal.getSubject(), principal.getEmail(), TenantRole.MEMBER, now)));
+              new TenantMembership(invite.getTenantId(), subject, email, invite.getRole() != null ? invite.getRole() : TenantRole.MEMBER, now)));
 
       invite.accept(now);
       return membership;

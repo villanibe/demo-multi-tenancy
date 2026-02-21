@@ -61,6 +61,10 @@ app:
         settingName: app.tenant_id
 
   security:
+    auth:
+      enabled: true
+      accessTokenTtlSeconds: 900
+      refreshTokenTtlSeconds: 1209600
     jwt:
       # Local dev only: HS256 signing key (min 32 bytes). In prod, use issuer/jwks.
       hs256:

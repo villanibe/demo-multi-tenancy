@@ -65,10 +65,10 @@ public class VirtualWebhookControlPlaneService {
         checkoutSessionRepository.save(session);
       }
 
-      return new CompletedCheckoutEvent(session.getTenantId(), session.getPlanCode(), session.getInterval());
+      return new CompletedCheckoutEvent(session.getTenantId(), session.getPlanCode(), session.getInterval(), session.getProviderSessionId());
     });
   }
 
-  public record CompletedCheckoutEvent(String tenantId, String planCode, BillingInterval interval) {
+  public record CompletedCheckoutEvent(String tenantId, String planCode, BillingInterval interval, String sessionId) {
   }
 }

@@ -25,6 +25,8 @@ services:
       APP_TENANCY_CLAIM: tenant_id
       APP_SECURITY_JWT_HS256_ENABLED: "true"
       APP_SECURITY_JWT_HS256_SECRET: "change-me-change-me-change-me-32bytes!!"
+      APP_PAYMENTS_PROVIDER: "VIRTUAL"
+      APP_PAYMENTS_WEBHOOKS_SECRET: "test-webhook-secret"
     ports:
       - "8080:8080"
 

@@ -22,10 +22,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @Configuration
 @EnableMethodSecurity
@@ -40,7 +44,8 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-          .requestMatchers("/api/billing/webhooks/**").permitAll()
+            .requestMatchers("/api/billing/webhooks/**").permitAll()
+            .requestMatchers("/api/public/**").permitAll()
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
@@ -96,5 +101,16 @@ public class SecurityConfiguration {
     }
     SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     return NimbusJwtDecoder.withSecretKey(key).build();
+  }
+
+  @Bean
+  @ConditionalOnProperty(prefix = "app.security.jwt.hs256", name = "enabled", havingValue = "true", matchIfMissing = true)
+  public JwtEncoder jwtEncoder(SecurityProperties securityProperties) {
+    String secret = securityProperties.getJwt().getHs256().getSecret();
+    if (secret == null || secret.length() < 32) {
+      throw new IllegalStateException("app.security.jwt.hs256.secret must be at least 32 characters");
+    }
+    SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    return new NimbusJwtEncoder(new ImmutableSecret<>(key));
   }
 }

@@ -40,6 +40,10 @@ public class TenantInvite {
   @Column(name = "status", nullable = false)
   private TenantInviteStatus status;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "role", nullable = false)
+  private TenantRole role;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -52,10 +56,11 @@ public class TenantInvite {
   protected TenantInvite() {
   }
 
-  public TenantInvite(String tenantId, String email, String token, Instant createdAt, Instant expiresAt) {
+  public TenantInvite(String tenantId, String email, String token, TenantRole role, Instant createdAt, Instant expiresAt) {
     this.tenantId = tenantId;
     this.email = email;
     this.token = token;
+    this.role = role != null ? role : TenantRole.MEMBER;
     this.createdAt = createdAt;
     this.expiresAt = expiresAt;
     this.status = TenantInviteStatus.PENDING;
@@ -79,6 +84,10 @@ public class TenantInvite {
 
   public TenantInviteStatus getStatus() {
     return status;
+  }
+
+  public TenantRole getRole() {
+    return role;
   }
 
   public Instant getCreatedAt() {

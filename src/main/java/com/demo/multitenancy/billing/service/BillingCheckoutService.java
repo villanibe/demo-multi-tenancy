@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BillingCheckoutService {
 
+  private static final String VIRTUAL_PROVIDER = "virtual";
+
   private final PlanRepository planRepository;
   private final PlanPriceRepository planPriceRepository;
   private final CheckoutSessionRepository checkoutSessionRepository;
@@ -70,8 +72,13 @@ public class BillingCheckoutService {
 
     String providerPriceId = planPrice.getProviderPriceIds().get(gateway.provider());
     if (providerPriceId == null || providerPriceId.isBlank()) {
-      throw new IllegalArgumentException(
-          "No provider price id configured for provider '" + gateway.provider() + "' and plan " + planCode + " (" + interval + ")");
+      if (VIRTUAL_PROVIDER.equalsIgnoreCase(gateway.provider())) {
+        // Virtual provider is for local E2E flows; it does not require pre-provisioned price ids.
+        providerPriceId = "virt_price_" + planCode + "_" + interval.name().toLowerCase();
+      } else {
+        throw new IllegalArgumentException(
+            "No provider price id configured for provider '" + gateway.provider() + "' and plan " + planCode + " (" + interval + ")");
+      }
     }
 
     PaymentGatewayCheckoutSession created = gateway.createCheckoutSession(tenantId, providerPriceId, planCode, interval);
